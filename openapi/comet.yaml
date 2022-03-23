@@ -1,0 +1,373 @@
+openapi: 3.0.0
+info:
+  title: 长连接消息服务
+  description: 公共长连接消息服务
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8060/comet/api/v1
+    description: 调试环境
+
+components:
+
+  schemas:
+    BaseResponse:
+      description: "基本响应"
+      type: object
+      properties:
+        code:
+          description: "状态码"
+          type: integer
+        message:
+          description: "错误信息"
+          type: string
+    WSMessage:
+      description: "消息"
+      type: object
+      properties:
+        id:
+          description: "消息ID"
+          type: string
+          required: true
+        topic:
+          description: "消息主题"
+          type: string
+          required: true
+        data:
+          description: "消息内容"
+          type: string
+          required: true
+        time:
+          description: "消息时间"
+          type: string
+          required: false
+    Message:
+      description: "消息"
+      type: object
+      properties:
+        id:
+          description: "消息ID"
+          type: string
+        topic:
+          description: "消息主题"
+          type: string
+        data:
+          description: "消息内容"
+          type: string
+        time:
+          description: "消息时间"
+          type: string
+        service:
+          description: "业务系统"
+          type: string
+        identity:
+          description: "业务系统唯一标识"
+          type: string
+    Peer:
+      type: object
+      properties:
+        id:
+          description: "客户端ID"
+          type: string
+        identity:
+          description: "客户端业务ID"
+          type: string
+        indexed:
+          description: "其他信息（带索引，可搜索）"
+          type: object
+        extra:
+          description: "其他信息（不带索引）"
+          type: object
+    AuthCallbackRequest:
+      type: object
+      properties:
+        token:
+          description: "鉴权密钥"
+          type: string
+        ip:
+          description: "IP地址"
+          type: string
+    AuthCallbackResponse:
+      type: object
+      properties:
+        identity:
+          description: "客户端ID"
+          type: string
+        indexed:
+          description: "其他信息（带索引，可搜索）"
+          type: object
+        extra:
+          description: "其他信息（不带索引）"
+          type: object
+    OnlineCallbackRequest:
+      type: object
+      properties:
+        id:
+          description: "客户端ID"
+          type: string
+          example: "门岗"
+        identity:
+          description: "业务系统唯一标识"
+          type: string
+          example: "门岗"
+        ip:
+          description: "IP地址"
+          type: string
+
+
+  parameters:
+    authParam:
+      description: "鉴权信息"
+      name: Authorization
+      in: path
+      required: true
+      schema:
+        type: string
+    protocolParam:
+      description: "连接协议（目前只支持 ws-json ）"
+      name: Comet-Protocol
+      in: path
+      required: true
+      schema:
+        type: string
+    serviceParam:
+      description: "业务服务"
+      name: Comet-Service
+      in: path
+      required: true
+      schema:
+        type: string
+    limitParam:
+      description: "分页大小"
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+
+  examples:
+    400Example:
+      value:
+        apiVersion: "v2"
+        statusCode: 400
+        message: "Bad Request"
+    416Example:
+      value:
+        apiVersion: "v2"
+        statusCode: 416
+        message: "Range Not Satisfiable"
+    500Example:
+      value:
+        apiVersion: "v2"
+        statusCode: 500
+        message: "Internal Server Error"
+    503Example:
+      value:
+        apiVersion: "v2"
+        statusCode: 503
+        message: "HTTP request timeout"
+    WSSubscribeExample:
+      value:
+        id: "aa-basdf-cc"
+        topic: "subscribe"
+        data: [ "chat.user.1000" ]
+        time: 1648006263
+    WSUnsubscribeExample:
+      value:
+        id: "aa-basdf-cc"
+        topic: "unsubscribe"
+        data: [ "chat.user.1000" ]
+        time: 1648006263
+    SubscribeExample:
+      value:
+        id: "aa-basdf-cc"
+        topic: "subscribe"
+        data: [ "chat.*" ]
+        service: "chat"
+        identity: "1000"
+        time: 1648006263
+    UnsubscribeExample:
+      value:
+        id: "aa-basdf-cc"
+        topic: "unsubscribe"
+        data: [ "chat.*" ]
+        service: "chat"
+        identity: "1000"
+        time: 1648006263
+
+paths:
+  /ws:
+    get:
+      summary: "长连接接口消息"
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - $ref: "#/components/parameters/protocolParam"
+        - $ref: "#/components/parameters/serviceParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WSMessage"
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WSMessage"
+              examples:
+                Subscribe:
+                  $ref: "#/components/examples/WSSubscribeExample"
+                Unsubscribe:
+                  $ref: "#/components/examples/WSUnsubscribeExample"
+        '401':
+          description: "未授权"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+
+  /mesaging:
+    get:
+      summary: "业务系统消息"
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - $ref: "#/components/parameters/protocolParam"
+        - $ref: "#/components/parameters/serviceParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Message"
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Message"
+              examples:
+                Subscribe:
+                  $ref: "#/components/examples/SubscribeExample"
+                Unsubscribe:
+                  $ref: "#/components/examples/UnsubscribeExample"
+        '401':
+          description: "未授权"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+
+  /peers:
+    get:
+      summary: "在线客户端列表"
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - $ref: "#/components/parameters/protocolParam"
+        - $ref: "#/components/parameters/serviceParam"
+        - $ref: "#/components/parameters/limitParam"
+        - in: query
+          description: "业务系统"
+          name: "service"
+        - in: query
+          description: "业务系统标识"
+          name: "identity（指定业务系统时生效）"
+        - in: query
+          description: "带索引字段名（指定业务系统时生效）"
+          name: "带索引字段名"
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Peer"
+        '401':
+          description: "未授权"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+
+  /peers/{peer_id}:
+    get:
+      summary: "在线客户端"
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - $ref: "#/components/parameters/protocolParam"
+        - $ref: "#/components/parameters/serviceParam"
+        - in: query
+          description: "客户端ID"
+          name: "peer_id"
+          required: true
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Peer"
+        '401':
+          description: "未授权"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+
+  /{auth_callback_addr}:
+    post:
+      summary: "认证回调"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id:
+                  description: "客户端ID"
+                  type: string
+                token:
+                  description: "鉴权密钥"
+                  type: string
+                ip:
+                  description: "IP地址"
+                  type: string
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  iendtity:
+                    description: "业务系统唯一标识"
+                    type: string
+        '401':
+          description: "未授权"
+
+  /{online_callback_addr}:
+    post:
+      summary: "上下线回调"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                identity:
+                  description: "业务系统唯一标识"
+                  type: string
+                ip:
+                  description: "IP地址"
+                  type: string
+      responses:
+        '200':
+          description: "成功"

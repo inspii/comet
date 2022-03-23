@@ -1,0 +1,84 @@
+openapi: 3.0.0
+info:
+  title: 长连接消息服务
+  description: 公共长连接消息服务
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8060/comet/api/v1
+    description: 调试环境
+
+components:
+
+  schemas:
+    Message:
+      description: "消息"
+      type: object
+      properties:
+        id:
+          description: "消息ID"
+          type: string
+        command:
+          description: "命令"
+          type: string
+        payload:
+          description: "内容"
+          type: string
+        time:
+          description: "时间"
+          type: string
+
+  examples:
+    SubscribeExample:
+      value:
+        id: "1"
+        command: "subscribe"
+        paylaod:
+          topic: "chat.user.1000"
+          client_id: "1000"
+    QueueSubscribeExample:
+      value:
+        id: "1"
+        command: "queue-subscribe"
+        paylaod:
+          topic: "chat.user.1000"
+          client_id: "1000"
+    UnsubscribeExample:
+      value:
+        id: "1"
+        command: "unsubscribe"
+        paylaod:
+          topic: "chat.user.1000"
+          client_id: "1000"
+    PublishExample:
+      value:
+        id: "1"
+        command: "publish"
+        paylaod:
+          topic: "chat.user.1000"
+          client_id: "1000"
+
+paths:
+  /mesaging:
+    get:
+      summary: "内部消息"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Message"
+      responses:
+        '200':
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+              examples:
+                Subscribe:
+                  $ref: "#/components/examples/SubscribeExample"
+                Unsubscribe:
+                  $ref: "#/components/examples/UnsubscribeExample"
+                Publish:
+                  $ref: "#/components/examples/PublishExample"
