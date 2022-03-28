@@ -7,5 +7,5 @@ type ListPeerOption struct {
 type Comet interface {
 	AddPeer(peer Peer) error
 	CountPeer() (total int, err error)
-	ListPeers(option ListPeerOption) (peer []Peer, err error)
+	ListPeer(option ListPeerOption) (peer []Peer, err error)
 }
