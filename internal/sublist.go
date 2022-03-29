@@ -1,6 +1,6 @@
 // Copyright 2012 Apcera Inc. All rights reserved.
 
-package stand_alone
+package internal
 
 import (
 	"sync"
@@ -54,8 +54,8 @@ func newLevel() *level {
 // defaultCacheMax is used to bound limit the frontend cache
 const defaultCacheMax = 1024
 
-// New will create a default sublist
-func New() *Sublist {
+// NewSublist will create a default sublist
+func NewSublist() *Sublist {
 	return &Sublist{
 		root:  newLevel(),
 		cache: make(map[string][]interface{}),

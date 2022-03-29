@@ -1,4 +1,4 @@
-package stand_alone
+package internal
 
 import (
 	"fmt"
@@ -41,12 +41,12 @@ func verifyNumLevels(s *Sublist, expected int, t *testing.T) {
 }
 
 func TestInit(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	verifyCount(s, 0, t)
 }
 
 func TestInsertCount(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	s.Insert("foo", "a")
 	s.Insert("bar", "b")
 	s.Insert("foo.bar", "b")
@@ -54,7 +54,7 @@ func TestInsertCount(t *testing.T) {
 }
 
 func TestSimple(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	val := "a"
 	sub := "foo"
 	s.Insert(sub, val)
@@ -64,7 +64,7 @@ func TestSimple(t *testing.T) {
 }
 
 func TestSimpleMultiTokens(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	val := "a"
 	sub := "foo.bar.baz"
 	s.Insert(sub, val)
@@ -74,7 +74,7 @@ func TestSimpleMultiTokens(t *testing.T) {
 }
 
 func TestPartialWildcard(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.c"
 	pwc := "a.*.c"
 	a, b := "a", "b"
@@ -87,7 +87,7 @@ func TestPartialWildcard(t *testing.T) {
 }
 
 func TestPartialWildcardAtEnd(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.c"
 	pwc := "a.b.*"
 	a, b := "a", "b"
@@ -100,7 +100,7 @@ func TestPartialWildcardAtEnd(t *testing.T) {
 }
 
 func TestFullWildcard(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.c"
 	fwc := "a.>"
 	a, b := "a", "b"
@@ -113,7 +113,7 @@ func TestFullWildcard(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.c.d"
 	value := "foo"
 	s.Insert(literal, value)
@@ -129,7 +129,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestRemoveWildcard(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.c.d"
 	pwc := "a.b.*.d"
 	fwc := "a.b.>"
@@ -149,7 +149,7 @@ func TestRemoveWildcard(t *testing.T) {
 }
 
 func TestRemoveCleanup(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.c.d.e.f"
 	depth := len(strings.Split(literal, "."))
 	value := "foo"
@@ -161,7 +161,7 @@ func TestRemoveCleanup(t *testing.T) {
 }
 
 func TestRemoveCleanupWildcards(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.*.d.e.>"
 	depth := len(strings.Split(literal, "."))
 	value := "foo"
@@ -173,7 +173,7 @@ func TestRemoveCleanupWildcards(t *testing.T) {
 }
 
 func TestCacheBehavior(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	literal := "a.b.c"
 	fwc := "a.>"
 	a, b := "a", "b"
@@ -211,7 +211,7 @@ func TestMatchLiterals(t *testing.T) {
 }
 
 func TestCacheBounds(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	s.Insert("cache.>", "foo")
 
 	tmpl := "cache.test.%d"
@@ -228,7 +228,7 @@ func TestCacheBounds(t *testing.T) {
 }
 
 func TestStats(t *testing.T) {
-	s := New()
+	s := NewSublist()
 	s.Insert("stats.>", "fwc")
 	tmpl := "stats.test.%d"
 	loop := 255
@@ -300,7 +300,7 @@ func TestStats(t *testing.T) {
 
 var subs []string
 var toks = []string{"apcera", "continuum", "component", "router", "api", "imgr", "jmgr", "auth"}
-var sl = New()
+var sl = NewSublist()
 var results = make([]interface{}, 0, 64)
 
 func init() {
@@ -338,7 +338,7 @@ func addWildcards() {
 
 func Benchmark______________________Insert(b *testing.B) {
 	b.SetBytes(1)
-	s := New()
+	s := NewSublist()
 	for i, l := 0, len(subs); i < b.N; i++ {
 		index := i % l
 		s.Insert(subs[index], subs[index])

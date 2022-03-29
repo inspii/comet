@@ -1,19 +1,55 @@
-package stand_alone
+package internal
 
 import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
-	"github.com/inspii/comet/internal/service/model"
-	"github.com/inspii/comet/internal/service/repository/messaging"
 	"io"
 	"math/rand"
 )
+
+type Message struct {
+	ID      string
+	Service string
+	Topic   string
+	Payload []byte
+	Time    int
+}
+
+const (
+	TopicAuth = "$.auth"
+	TopicJoin = "$.join"
+)
+
+type MessageAuth struct {
+	IP    string
+	Token string
+}
+
+type MessageJoin struct {
+	IP string
+}
+
+type SubscribeHandler func(topic string, message Message)
+
+type Subscriber interface {
+	// Unsubscribe 取消订阅
+	Unsubscribe()
+}
+
+type Messaging interface {
+	// Subscribe 订阅消息，同一主题，各个订阅者都会收到消息
+	Subscribe(topicPattern string, handler SubscribeHandler) Subscriber
+	// QueueSubscribe 订阅消息，同一主题，只有一个订阅者会收到消息
+	QueueSubscribe(topicPattern string, queue string, handler SubscribeHandler) Subscriber
+	// Publish 发布消息
+	Publish(topic string, msg Message) error
+}
 
 type subscription struct {
 	topicPattern string
 	queue        string
 	sid          string
-	handler      messaging.SubscribeHandler
+	handler      SubscribeHandler
 }
 
 func genId() string {
@@ -35,15 +71,15 @@ type standAloneImpl struct {
 	sublist *Sublist
 }
 
-func NewStandAloneMessaging() messaging.Messaging {
-	return &standAloneImpl{sublist: New()}
+func NewStandAloneMessaging() Messaging {
+	return &standAloneImpl{sublist: NewSublist()}
 }
 
-func (m *standAloneImpl) Subscribe(topicPattern string, handler messaging.SubscribeHandler) messaging.Subscriber {
+func (m *standAloneImpl) Subscribe(topicPattern string, handler SubscribeHandler) Subscriber {
 	return m.QueueSubscribe(topicPattern, "", handler)
 }
 
-func (m *standAloneImpl) QueueSubscribe(topicPattern string, queue string, handler messaging.SubscribeHandler) messaging.Subscriber {
+func (m *standAloneImpl) QueueSubscribe(topicPattern string, queue string, handler SubscribeHandler) Subscriber {
 	s := &subscription{
 		topicPattern: topicPattern,
 		sid:          genId(),
@@ -58,7 +94,7 @@ func (m *standAloneImpl) QueueSubscribe(topicPattern string, queue string, handl
 	}
 }
 
-func (m *standAloneImpl) Publish(topic string, msg model.Message) error {
+func (m *standAloneImpl) Publish(topic string, msg Message) error {
 	sublist := m.sublist.Match(topic)
 
 	var subs []*subscription

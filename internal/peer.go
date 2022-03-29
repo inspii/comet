@@ -1,10 +1,16 @@
-package service
+package internal
 
 import (
 	"errors"
-	"github.com/inspii/comet/internal/service/model"
 	"io"
 )
+
+type Peer interface {
+	Receive(out chan<- *Message) error
+	Send(msg *Message) error
+	Subscribe()
+	UnSubscribe()
+}
 
 var (
 	errPeerAlreadySetReceiveChannel = errors.New("peer already set receive channel")
@@ -12,18 +18,18 @@ var (
 )
 
 type peerImpl struct {
-	rw  io.ReadWriter
-	in  chan *model.Message
-	out chan<- *model.Message
+	conn io.ReadWriter
+	in   chan *Message
+	out  chan<- *Message
 }
 
-func NewPeer(rw io.ReadWriter) Peer {
+func NewPeer(conn io.ReadWriter) Peer {
 	return &peerImpl{
-		rw: rw,
+		conn: conn,
 	}
 }
 
-func (p *peerImpl) Receive(out chan<- *model.Message) error {
+func (p *peerImpl) Receive(out chan<- *Message) error {
 	if p.out != nil {
 		return errPeerAlreadySetReceiveChannel
 	}
@@ -31,23 +37,9 @@ func (p *peerImpl) Receive(out chan<- *model.Message) error {
 	return nil
 }
 
-func (p *peerImpl) Send(msg *model.Message) error {
-	if p.IsClosed() {
-		return errPeerClosed
-	}
-
+func (p *peerImpl) Send(msg *Message) error {
 	p.in <- msg
 	return nil
-}
-
-func (p *peerImpl) Close() {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p *peerImpl) IsClosed() bool {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (p *peerImpl) Subscribe() {
