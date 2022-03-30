@@ -132,7 +132,7 @@ components:
         type: string
     serviceParam:
       description: "业务服务"
-      name: Comet-Service
+      name: Comet-Services
       in: path
       required: true
       schema:
